@@ -9,7 +9,7 @@ var createTaskHandler = function () {
     listItemEl.className = "task-item";
     tasksToDoEl.appendChild(listItemEl);
 
-};
 
+};
 
 buttonEl.addEventListener("click", createTaskHandler);
