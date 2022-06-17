@@ -5,6 +5,8 @@ var pageContentEl = document.querySelector("#page-content");//<main> section set
 var tasksInProgressEl = document.querySelector("#tasks-in-progress");//<ul> element in progress setion js var
 var tasksCompletedEl = document.querySelector("#tasks-completed");//<ul> element in completed section js var
 
+var tasks = [];
+
 //run this when submit button pushed...
 var taskFormHandler = function (event) {
     event.preventDefault();
@@ -31,8 +33,12 @@ var taskFormHandler = function (event) {
     else {
         var taskDataObj = {
             name: taskNameInput,
-            type: taskTypeInput
+            type: taskTypeInput,
+            status: "to do"
         };
+        console.log(taskDataObj);
+        console.log(taskDataObj.status);
+
         createTaskEl(taskDataObj);
     }
 };
@@ -50,6 +56,10 @@ var createTaskEl = function (taskDataObj) {
     //add html content to the div
     taskInfoEl.innerHTML = "<h3 class='task-name'>" + taskDataObj.name + "</h3><span class='task-type'>" + taskDataObj.type + "</span >"
     listItemEl.appendChild(taskInfoEl);
+
+    //add .id property:value to the dataObject in formHandler/push to the cooresponding 'tasks' array of objects..it's a dynamic value, though..
+    taskDataObj.id = taskIdCounter;
+    tasks.push(taskDataObj);
 
     //create the task action buttons for task..
     var taskActionsEl = createTaskActions(taskIdCounter);  //createTaskActions function over the current taskIdCountervalue..returns as <div>
@@ -124,8 +134,14 @@ var completeEditTask = function (taskName, taskType, taskId) {
     taskSelected.querySelector("span.task-type").textContent = taskType;
     taskSelected.querySelector("h3.task-name").textContent = taskName;
 
-    alert("task updated!");
+    for (var i = 0; i < tasks.length; i++) {
+        if (tasks[i].id === parseInt(taskId)) {
+            tasks[i].name = taskName;
+            tasks[i].type = taskType;
+        }
+    }
 
+    alert("task updated!");
     //remove data attribute from the form
     formEl.removeAttribute("data-task-id");
     //update form button to go back to reading'Add Task'.
@@ -137,7 +153,16 @@ var completeEditTask = function (taskName, taskType, taskId) {
 var deleteTask = function (taskId) {
     var taskSelected = document.querySelector(".task-item[data-task-id = '" + taskId + "']");
     taskSelected.remove();
-
+    //create new array to hold updated list of tasks..
+    var updatedTaskArr = [];
+    //loop through current tasks
+    for (var i = 0; i < tasks.length; i++) {
+        if (tasks[i].id !== parseInt(taskId)) {
+            updatedTaskArr.push(tasks[i]);
+        }
+    }
+    //reassign tasks array to be thne same as updatedArr(which doesn't include deleted Obj anymore)
+    tasks = updatedTaskArr;
 };
 //function to edit task
 var editTask = function (taskId) {
@@ -183,6 +208,11 @@ var taskStatusChangeHandler = function (event) {
     }
     else if (statusValue === "completed") {
         tasksCompletedEl.appendChild(taskSelected);
+    }
+    for (var i = 0; i < tasks.length; i++) {
+        if (tasks[i].id === parseInt(taskId)) {
+            tasks[i].status = statusValue;
+        }
     }
 };
 
