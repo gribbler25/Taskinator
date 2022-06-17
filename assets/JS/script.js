@@ -1,10 +1,9 @@
 var taskIdCounter = 0; //initial counter value, used to unique-id tasks as they're created
 var formEl = document.querySelector("#task-form")//<form> element js var
 var tasksToDoEl = document.querySelector("#tasks-to-do");//<ul> element in todo section js var
-var pageContentEl = document.querySelector("#page-content");//<main> section set to a js var
 var tasksInProgressEl = document.querySelector("#tasks-in-progress");//<ul> element in progress setion js var
 var tasksCompletedEl = document.querySelector("#tasks-completed");//<ul> element in completed section js var
-
+var pageContentEl = document.querySelector("#page-content");//<main> section set to a js var
 var tasks = [];
 
 //run this when submit button pushed...
@@ -36,8 +35,7 @@ var taskFormHandler = function (event) {
             type: taskTypeInput,
             status: "to do"
         };
-        console.log(taskDataObj);
-        console.log(taskDataObj.status);
+
 
         createTaskEl(taskDataObj);
     }
@@ -61,6 +59,7 @@ var createTaskEl = function (taskDataObj) {
     taskDataObj.id = taskIdCounter;
     tasks.push(taskDataObj);
 
+    saveTasks();
     //create the task action buttons for task..
     var taskActionsEl = createTaskActions(taskIdCounter);  //createTaskActions function over the current taskIdCountervalue..returns as <div>
     listItemEl.appendChild(taskActionsEl);//append the <div> with the buttons created to the <li>
@@ -97,7 +96,7 @@ var createTaskActions = function (taskId) {
     actionContainerEl.appendChild(statusSelectEl);
 
     //for loop over an array to finish creating the <option> choices
-    var statusChoices = ["To-do", "In-progress", "Completed"];
+    var statusChoices = ["to do", "in-progress", "completed"];
 
     for (i = 0; i < statusChoices.length; i++) {
         var statusOptionEl = document.createElement("option");
@@ -140,7 +139,7 @@ var completeEditTask = function (taskName, taskType, taskId) {
             tasks[i].type = taskType;
         }
     }
-
+    saveTasks();
     alert("task updated!");
     //remove data attribute from the form
     formEl.removeAttribute("data-task-id");
@@ -163,6 +162,7 @@ var deleteTask = function (taskId) {
     }
     //reassign tasks array to be thne same as updatedArr(which doesn't include deleted Obj anymore)
     tasks = updatedTaskArr;
+    saveTasks();
 };
 //function to edit task
 var editTask = function (taskId) {
@@ -187,10 +187,7 @@ var editTask = function (taskId) {
 
 };
 
-//debugger;
 var taskStatusChangeHandler = function (event) {
-
-    console.log(event.target.value);
 
     // get the task list item's id based on the .target's data-task-id attr
     var taskId = event.target.getAttribute("data-task-id");
@@ -200,7 +197,7 @@ var taskStatusChangeHandler = function (event) {
     // get the currently selected option's value and convert to lowercase
     var statusValue = event.target.value.toLowerCase();
 
-    if (statusValue === "to-do") {
+    if (statusValue === "to do") {
         tasksToDoEl.appendChild(taskSelected);
     }
     else if (statusValue === "in-progress") {
@@ -214,8 +211,74 @@ var taskStatusChangeHandler = function (event) {
             tasks[i].status = statusValue;
         }
     }
+    saveTasks();
 };
+//saves array Obj to local storage..
+var saveTasks = function () {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+};
+// Gets task items from localStorage.
+// Converts tasks from the string format back into an array of objects.
+// Iterates through a tasks array and creates task elements on the page from it.
+var loadTasks = function () {
+    tasks = localStorage.getItem("tasks");
+    console.log(tasks);
+    //check for null value, if no local data, return the array to empty/end fxn
+    if (tasks === null) {
+        tasks = [];
+        return false;
+    }
+    tasks = JSON.parse(tasks);
+    console.log(tasks);
 
-formEl.addEventListener("submit", taskFormHandler);//event handler, listens for the submit button or enter on the form element key to run taskFormHandler function
-pageContentEl.addEventListener("click", taskButtonHandler);//listens for a 'click' on the ,<main> section to run the fxn
-pageContentEl.addEventListener("change", taskStatusChangeHandler);//listens for any change to elements in <main> section to run the fxn
+    //iterate over all the array's objects..
+    //debugger;
+    for (var i = 0; i < tasks.length; i++) {
+        tasks[i].id = taskIdCounter;
+        console.log(tasks[i]);
+
+        var listItemEl = document.createElement("li");//recreate the <li>
+        listItemEl.className = "task-item";
+        listItemEl.setAttribute("data-task-id", tasks[i].id);
+
+        var taskInfoEl = document.createElement("div");//recreate the <div> inside the <li>, givning the <div> innerHTML <h3>/ <span> as above..
+        taskInfoEl.className = "task-info";
+        taskInfoEl.innerHTML = "<h3 class='task-name'>" + tasks[i].name + "</h3><span class='task-type'>" + tasks[i].type + "</span>";
+        listItemEl.appendChild(taskInfoEl);
+        // console.log(listItemEl);
+        // console.log(tasks[i].status);// seems to work here, recognizing tasks[i].status....
+
+        var taskActionsEl = createTaskActions(tasks[i].id);
+        //console.log(tasks[i].status);//AFTER THE createTaskActions() FXN RUNS, (TASKS[I].STATUS) NO LONGER READ BY PROGRAM.??? tasks no longer an aray of objects?
+
+        listItemEl.appendChild(taskActionsEl);//append the <div>, with the buttons and selectors <div> created, to the <li>
+        console.log(listItemEl); //this works, all elements appended and present..
+        // console.log(tasks);
+        // console.log(tasks[i]);
+        // console.log(tasks[i].status);
+        if (tasks[i].status == 'to do') {
+            listItemEl.querySelector("select[name='change-status']").selectedIndex = 0;
+            tasksToDoEl.appendChild(listItemEl);
+            console.log(tasksToDoEl);
+        }
+
+        else if (tasks[i].status == 'in-progress') {
+            listItemEl.querySelector("select[name='change-status']").selectedIndex = 1;
+            tasksInProgressEl.appendChild(listItemEl);
+            console.log(tasksInProgressEl);
+        }
+
+        else if (tasks[i].status == 'completed') {
+            listItemEl.querySelector("select[name='change-status']").selectedIndex = 2;
+            tasksCompletedEl.appendChild(listItemEl);
+            console.log(tasksCompletedEl);
+        }
+        taskIdCounter++
+    };
+    console.log(listItemEl);
+};
+formEl.addEventListener("submit", taskFormHandler)//event handler, listens for the submit button or enter on the form element key to run taskFormHandler function
+pageContentEl.addEventListener("click", taskButtonHandler)//listens for a 'click' on the ,<main> section to run the fxn
+pageContentEl.addEventListener("change", taskStatusChangeHandler)//listens for any change to elements in <main> section to run the fxn
+
+loadTasks();
